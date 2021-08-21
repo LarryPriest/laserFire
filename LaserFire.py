@@ -16,21 +16,20 @@ import time
 from adafruit_simplemath import map_range
 
 TOTALBITS = 15  # START AT 0
-LEDbits = []
+LEDbits = []  # list of pins used for the laser pulses
+# input for the pulse timer
 delaySpeed = analogio.AnalogIn(board.GP28)
-DutyCycle = 0xffff
+DutyCycle = 0xffff  # max duty cycle
 DutyCycle2 = DutyCycle/2
 DutyCycle4 = DutyCycle/4
-new_min = 0.025
-new_max = 2
+new_min = 0.025  # minimum time between pulses
+new_max = 2  # max time between pulses
 
 
 class LaserFire():
 
     def __init__(self):
-        # setup delay pot
-
-        # Setup LED list
+        # initialize LED list
         subcommand1 = 'LEDbits.append(pwmio.PWMOut(board.GP'
         subcommand2 = ', frequency=1000))'
         for i in range(TOTALBITS+1):
