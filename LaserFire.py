@@ -41,10 +41,11 @@ class LaserFire():
 if __name__ == '__main__':
     LaserFire()
     while True:
-        # remapped_delaySpeed = int(map_range(delaySpeed.value, 0, 65520, new_min, new_max))
-        remapped_delaySpeed = map_range(delaySpeed.value, 200, 65520, new_min, new_max)
 
         for i in range(8):
+            # remapped_delaySpeed = int(map_range(delaySpeed.value, 0, 65520, new_min, new_max))
+            remapped_delaySpeed = map_range(delaySpeed.value, 200, 65520, new_min, new_max)
+            # set the LED's
             LEDbits[i].duty_cycle = int(DutyCycle)
             if i >= 1:
                 LEDbits[i-1].duty_cycle = int(DutyCycle2)
