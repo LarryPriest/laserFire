@@ -15,9 +15,6 @@ import pwmio
 import time
 from adafruit_simplemath import map_range
 
-new_min = 0.025  # min and max delay time(seconds)
-new_max = 2
-delaySpeed = analogio.AnalogIn(board.GP28)  # rotary for speed of bolt
 
 
 class LaserFire():
@@ -27,15 +24,26 @@ class LaserFire():
     FullOnDutyCycle = 0xffff  # full on
     DutyCycle = []
     pathlength = TOTALBITS/2
+    speedcontrol = True
+    new_min = 0.015  # min and max delay time(seconds)
+    new_max = 2
+    delaySpeed = analogio.AnalogIn(board.GP28)  # rotary for speed of bolt
+
     
     def __init__(self, **kwargs):
-        print(kwargs)
+        # Only allowed for tracers and path length
         if kwargs != {}:
             if 'tracers' in kwargs:
                 LaserFire.TRACERS = kwargs['tracers']
             if 'range' in kwargs:
                 LaserFire.pathlength = kwargs['range']
-            
+            if 'laserSpeed' in kwargs:  # laserSpeed in seconds
+                if kwargs['laserSpeed'] != '':
+                    LaserFire.speedcontrol = False
+                    LaserFire.delaySpeed = kwargs['laserSpeed']
+                else:
+                    LaserFire.delaySpeed = LaserFire.delaySpeed
+        # Set the tracer PWM   
         for i in reversed(range(LaserFire.TRACERS)):
             LaserFire.DutyCycle.append(int(LaserFire.FullOnDutyCycle/(LaserFire.TRACERS-i)))
         # Setup LED list
@@ -46,16 +54,19 @@ class LaserFire():
             exec(fullcommand)
 
     def Fire():
-         # remapped_delaySpeed = int(map_range(delaySpeed.value,
-            # 0, 65520, new_min, new_max))
-        remapped_delaySpeed = map_range(delaySpeed.value,
-                                        200, 65520, new_min, new_max)
+        if LaserFire.speedcontrol:
+             # Get the delay from the rotary - may change if deeded to pass as param.
+            remapped_delaySpeed = map_range(LaserFire.delaySpeed.value,200, 65520,
+                                            LaserFire.new_min, LaserFire.new_max)
+        else:
+            remapped_delaySpeed = LaserFire.delaySpeed
+            
         for i in range(LaserFire.pathlength):
-           
+            
             j = i + LaserFire.pathlength
             # set bolt and tracers
             for d in range(LaserFire.TRACERS):
-                print(i, d, LaserFire.DutyCycle[d])
+                print(remapped_delaySpeed, i, d, LaserFire.DutyCycle[d])
                 LaserFire.LEDbits[i-d].duty_cycle = LaserFire.DutyCycle[d]
                 LaserFire.LEDbits[j-d].duty_cycle = LaserFire.DutyCycle[d]
             # cleanup overflowed tracers
@@ -65,12 +76,14 @@ class LaserFire():
                     LaserFire.LEDbits[j-x].duty_cycle = 0
 
             time.sleep(remapped_delaySpeed)
-
+            
+            # Turn everthing off
             for i in range(len(LaserFire.LEDbits)):  # turn off all LED's
                 LaserFire.LEDbits[i].duty_cycle = 0x0000
 
 
 if __name__ == '__main__':
+#     LaserFire(tracers=3, range=8, laserSpeed=0.2)  # laserSpeed is steps/sec (in sec.)
     LaserFire(tracers=3, range=8)
     while True:
         LaserFire.Fire()
